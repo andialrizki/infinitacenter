@@ -1,0 +1,114 @@
+<?php
+
+namespace App\Http\Controllers\admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use App\Models\ProductCategory;
+use App\Models\Setting;
+
+use Validator;
+use DB;
+class ProductCategoryController extends Controller
+{
+    public function index()
+    {
+        $data['data'] = ProductCategory::get();
+        $data['settings'] = Setting::first();
+
+        return view("backend.product-category.index",$data);
+    }
+
+    public function create(Request $request)
+    {
+        if($request->images != '') {
+            $data['images']= str_replace(url('/'), "",$request->images);
+        }
+        
+        if($request->id == 0){
+            $sort = ProductCategory::where('sort',$request->sort)->count();
+        }else{
+            $sort = ProductCategory::where('sort',$request->sort)->where('id','!=',$request->id)->count();
+        }
+        
+        if($sort != 0){
+            return response()->json(['status'=>'Sort sudah dipakai']);
+        }else{
+            if($request->id == 0){
+                DB::table('product_category')->insert([
+                    'sort' => $request->sort,
+                    'status' => $request->status,
+                    'title' => $request->title,
+                    'desc_id' => $request->description,
+                    'land_area' => $request->land_area,
+                    'building_area' => $request->building_area, 
+                    'bedroom' => $request->bedroom, 
+                    'bathroom' => $request->bathroom, 
+                    'listrik' => $request->listrik, 
+                    'tangga' => $request->tangga,
+                    'kamar_pembantu'=> $request->kamar_pembantu, 
+                    'pondasi'=>$request->pondasi,
+                    'atap'=>$request->atap, 
+                    'lantai'=> $request->lantai, 
+                    'pintu'=>$request->pintu, 
+                    'jendela'=> $request->jendela, 
+                    'sanita_air'=>$request->sanita_air, 
+                    'air'=>$request->air,
+                    'image' => $data['images'],
+                    'create' => date('Y-m-d H:i:s')
+                ]);
+            }else{
+                DB::table('product_category')->where('id',$request->id)->update([
+                    'sort' => $request->sort,
+                    'status' => $request->status,
+                    'title' => $request->title,
+                    'land_area' => $request->land_area,
+                    'building_area' => $request->building_area, 
+                    'bedroom' => $request->bedroom, 
+                    'bathroom' => $request->bathroom, 
+                    'listrik' => $request->listrik, 
+                    'tangga' => $request->tangga,
+                    'kamar_pembantu'=> $request->kamar_pembantu, 
+                    'pondasi'=>$request->pondasi,
+                    'atap'=>$request->atap, 
+                    'lantai'=> $request->lantai, 
+                    'pintu'=>$request->pintu, 
+                    'jendela'=> $request->jendela, 
+                    'sanita_air'=>$request->sanita_air, 
+                    'air'=>$request->air,
+                    'desc_id' => $request->description,
+                    'image' => $data['images'],
+                    'update' => date('Y-m-d H:i:s')
+                ]);
+            }
+            return response()->json(['status'=>'Data Berhasil disimpan']);
+        }
+
+        
+    }
+
+    public function delete($id)
+    {
+        $delete = ProductCategory::findOrFail($id);
+        $delete->delete();
+        return redirect()->route('product-category.index')->withSuccess('Data Berhasil dihapus!');
+    }
+
+    public function multi_delete(Request $req)
+    {
+        $delete = ProductCategory::whereIn('id', $req->id)->get();
+        foreach ($delete as $deletes) {
+            $data = ProductCategory::findOrFail($deletes['id'])->delete();
+        }
+    }
+
+    public function editstatus($id,Request $request)
+    {   
+        DB::table('product_category')->where('id',$id)->update([
+            'status'=>$request->sts,
+            'update'=>date('Y-m-d H:i:s')
+        ]);
+        return response()->json(['success'=>'Status Berhasil diubah']);
+    }
+}
